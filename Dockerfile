@@ -1,19 +1,20 @@
 # Multi-stage Dockerfile para Backend + Frontend no Render
-FROM node:18-alpine AS frontend-build
+FROM node:18-slim AS frontend-build
 
 WORKDIR /frontend
 
 # Copiar package.json e instalar dependências
 COPY frontend/package*.json ./
-RUN npm ci
+RUN npm install --legacy-peer-deps
 
 # Copiar código do frontend
 COPY frontend/ ./
 
 # Definir variável de ambiente para o build
 ENV VITE_API_URL=/
+ENV NODE_ENV=production
 
-# Fazer build do frontend (sem type check)
+# Fazer build do frontend
 RUN npm run build
 
 # Stage 2: Backend Python + Frontend build
