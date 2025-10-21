@@ -464,6 +464,9 @@ Explore a documentação detalhada do projeto:
 - **[TESTING.md](TESTING.md)** - Guia completo de testes
 - **[env.example](env.example)** - Template de variáveis de ambiente
 
+- <img width="1170" height="700" alt="image" src="https://github.com/user-attachments/assets/257a2115-c081-42ae-804c-b8a60f589a68" />
+
+
 ## 📝 Licença
 
 Este projeto está sob a licença MIT. Veja [LICENSE](LICENSE) para detalhes.
