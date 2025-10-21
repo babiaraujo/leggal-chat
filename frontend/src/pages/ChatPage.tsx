@@ -109,7 +109,7 @@ export function ChatPage() {
 
       {/* Área de Mensagens */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
-        <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+        <div className="max-w-6xl mx-auto px-2 sm:px-3 py-3 space-y-2.5">
           {messages.map((message) => (
             <MessageBubble key={message.id} message={message} />
           ))}
@@ -120,13 +120,13 @@ export function ChatPage() {
 
       {/* Input de Mensagem */}
       <div className="bg-white border-t border-gray-200 shadow-lg">
-        <div className="max-w-4xl mx-auto p-4">
-          <div className="flex items-end gap-3">
+        <div className="max-w-6xl mx-auto p-2 sm:p-3">
+          <div className="flex items-end gap-2 sm:gap-3">
             <div className="flex-1 relative">
               <textarea
                 ref={inputRef}
                 rows={1}
-                className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none transition-all"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none transition-all text-sm sm:text-base"
                 placeholder="Digite sua mensagem..."
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
@@ -137,7 +137,7 @@ export function ChatPage() {
             </div>
             <button
               onClick={handleSendMessage}
-              className="flex-shrink-0 w-12 h-12 bg-green-600 text-white rounded-full hover:bg-green-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center shadow-lg"
+              className="flex-shrink-0 w-11 h-11 sm:w-12 sm:h-12 bg-green-600 text-white rounded-full hover:bg-green-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center shadow-lg"
               disabled={isLoading || !inputText.trim()}
               aria-label="Enviar mensagem"
             >
