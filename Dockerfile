@@ -7,8 +7,13 @@ WORKDIR /frontend
 COPY frontend/package*.json ./
 RUN npm ci
 
-# Copiar código e fazer build
+# Copiar código do frontend
 COPY frontend/ ./
+
+# Definir variável de ambiente para o build
+ENV VITE_API_URL=/
+
+# Fazer build do frontend (sem type check)
 RUN npm run build
 
 # Stage 2: Backend Python + Frontend build
