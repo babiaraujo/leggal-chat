@@ -1,10 +1,11 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
+import os
 
 
 class Settings(BaseSettings):
-    # Database
-    database_url: str = "postgresql://leggal_user:leggal_password@localhost:5432/leggal_db"
+    # Database (usa SQLite em memória se DATABASE_URL não estiver definida)
+    database_url: str = os.getenv("DATABASE_URL", "sqlite:///./leggal.db")
 
     # JWT
     secret_key: str = "your-secret-key-here-make-it-long-and-random-at-least-32-characters"
