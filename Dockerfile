@@ -3,15 +3,21 @@ FROM node:18-slim AS frontend-build
 
 WORKDIR /app
 
-# Copiar todo o frontend
+# Copiar package files primeiro (para cache)
+COPY frontend/package*.json ./
+
+# Instalar dependências
+RUN npm install --legacy-peer-deps
+
+# Copiar resto do código
 COPY frontend/ ./
 
 # Definir variável de ambiente para o build
 ENV VITE_API_URL=/
 ENV NODE_ENV=production
 
-# Instalar dependências e fazer build
-RUN npm install --legacy-peer-deps && npm run build
+# Fazer build
+RUN npm run build
 
 # Stage 2: Backend Python + Frontend build
 FROM python:3.11-slim
