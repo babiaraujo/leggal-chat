@@ -1,20 +1,14 @@
-/**
- * Funções utilitárias para formatação
- */
-
-/**
- * Converte markdown simples para HTML
- * Suporta: **negrito**, quebras de linha
- */
 export function formatMarkdown(text: string): string {
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n/g, '<br />')
+  const div = document.createElement('div')
+  div.textContent = text
+  let escaped = div.innerHTML
+  
+  escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+  escaped = escaped.replace(/\n/g, '<br />')
+  
+  return escaped
 }
 
-/**
- * Formata data para exibição
- */
 export function formatTime(date: Date): string {
   return date.toLocaleTimeString('pt-BR', {
     hour: '2-digit',
@@ -22,9 +16,6 @@ export function formatTime(date: Date): string {
   })
 }
 
-/**
- * Formata data completa
- */
 export function formatDate(date: Date): string {
   return date.toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -33,9 +24,6 @@ export function formatDate(date: Date): string {
   })
 }
 
-/**
- * Formata data e hora
- */
 export function formatDateTime(date: Date): string {
   return `${formatDate(date)} às ${formatTime(date)}`
 }

@@ -10,7 +10,8 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=6, max_length=100)
+    name: Optional[str] = Field(None, max_length=100)
 
 
 class UserResponse(UserBase):
@@ -37,9 +38,9 @@ class TokenData(BaseModel):
 
 
 class TaskBase(BaseModel):
-    title: str
-    description: Optional[str] = None
-    raw_message: Optional[str] = None
+    title: str = Field(..., min_length=1, max_length=200)
+    description: Optional[str] = Field(None, max_length=2000)
+    raw_message: Optional[str] = Field(None, max_length=5000)
     priority: Optional[Priority] = Priority.MEDIUM
     status: Optional[TaskStatus] = TaskStatus.PENDING
 

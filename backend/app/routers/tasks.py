@@ -17,7 +17,6 @@ async def create_task(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Cria uma nova tarefa"""
     try:
         task = await TaskService.create_task(db, current_user.id, task_data)
         return TaskResponse.model_validate(task)
@@ -30,15 +29,14 @@ async def create_task(
 
 @router.get("/", response_model=List[TaskResponse])
 async def list_tasks(
-    status: str = Query(None, description="Filtrar por status"),
-    priority: str = Query(None, description="Filtrar por prioridade"),
-    search: str = Query(None, description="Termo de busca"),
-    limit: int = Query(50, ge=1, le=100, description="Limite de resultados"),
-    offset: int = Query(0, ge=0, description="Offset para paginação"),
+    status: str = Query(None),
+    priority: str = Query(None),
+    search: str = Query(None),
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Lista tarefas com filtros opcionais"""
     filters = TaskFilters(
         status=status,
         priority=priority,
@@ -57,7 +55,6 @@ def get_task(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Busca tarefa por ID"""
     task = TaskService.get_task_by_id(db, task_id, current_user.id)
 
     if not task:
@@ -76,7 +73,6 @@ def update_task(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Atualiza uma tarefa"""
     task = TaskService.update_task(db, task_id, current_user.id, task_data)
 
     if not task:
@@ -94,7 +90,6 @@ def delete_task(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Deleta uma tarefa"""
     deleted = TaskService.delete_task(db, task_id, current_user.id)
 
     if not deleted:
@@ -111,18 +106,16 @@ def get_task_stats(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Obtém estatísticas das tarefas do usuário"""
     return TaskService.get_task_stats(db, current_user.id)
 
 
 @router.get("/search/similar", response_model=List[SearchResult])
 async def search_similar_tasks(
-    query: str = Query(..., description="Termo de busca semântica"),
-    limit: int = Query(5, ge=1, le=20, description="Número máximo de resultados"),
+    query: str = Query(...),
+    limit: int = Query(5, ge=1, le=20),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Busca tarefas similares usando IA"""
     similar_tasks = await TaskService.search_similar_tasks(
         db, query, current_user.id, limit
     )

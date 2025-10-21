@@ -1,18 +1,21 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from ..core.dependencies import get_db, get_current_user
 from ..models.models import User, Task, ChatMessage as ChatMessageModel
 from ..services.ai_service import ai_service
 from ..services.task_service import TaskService
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import uuid
 from datetime import datetime
 
 router = APIRouter(prefix="/chat", tags=["chat"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 class ChatMessage(BaseModel):
-    message: str
+    message: str = Field(..., min_length=1, max_length=5000)
 
 
 class ChatResponse(BaseModel):
@@ -35,7 +38,6 @@ async def get_chat_history(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Retorna histórico de mensagens do usuário"""
     messages = db.query(ChatMessageModel).filter(
         ChatMessageModel.user_id == current_user.id
     ).order_by(ChatMessageModel.created_at.desc()).limit(limit).all()
@@ -48,24 +50,20 @@ async def get_chat_history(
             task_id=msg.task_id,
             created_at=msg.created_at
         )
-        for msg in reversed(messages)  # Inverte para ordem cronológica
+        for msg in reversed(messages)
     ]
 
 
 @router.post("/message", response_model=ChatResponse)
+@limiter.limit("30/minute")
 async def send_message(
+    request: Request,
     data: ChatMessage,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Processa mensagem do chat de forma agêntica:
-    - Se for pergunta: responde diretamente
-    - Se for solicitação: cria tarefa
-    """
     message = data.message.strip()
     
-    # Salvar mensagem do usuário
     user_message = ChatMessageModel(
         id=str(uuid.uuid4()),
         user_id=current_user.id,
@@ -75,10 +73,8 @@ async def send_message(
     db.add(user_message)
     db.commit()
     
-    # Usar IA para classificar e processar
     result = await process_chat_message(message, current_user, db)
     
-    # Salvar resposta da IA
     ai_message = ChatMessageModel(
         id=str(uuid.uuid4()),
         user_id=current_user.id,
@@ -93,13 +89,9 @@ async def send_message(
 
 
 async def process_chat_message(message: str, user: User, db: Session) -> ChatResponse:
-    """Processa mensagem com comportamento agêntico"""
-    
-    # Classificar tipo de mensagem
     is_question = await classify_message_type(message)
     
     if is_question:
-        # Responder pergunta diretamente
         answer = await answer_question(message, user, db)
         return ChatResponse(
             type="answer",
@@ -107,13 +99,10 @@ async def process_chat_message(message: str, user: User, db: Session) -> ChatRes
             task=None
         )
     else:
-        # Criar tarefa
         from ..models.schemas import TaskCreate
         
-        # Analisar com IA
         analysis = await ai_service.analyze_task(message)
         
-        # Criar tarefa
         task_data = TaskCreate(
             title=analysis.title,
             description=analysis.summary,
@@ -124,7 +113,6 @@ async def process_chat_message(message: str, user: User, db: Session) -> ChatRes
         
         task = await TaskService.create_task(db, user.id, task_data)
         
-        # Emoji e tradução da prioridade
         priority_map = {
             "LOW": {"emoji": "🟢", "text": "Baixa"},
             "MEDIUM": {"emoji": "🟡", "text": "Média"},
@@ -174,11 +162,8 @@ Estou aqui para otimizar seu tempo! 💪"""
 
 
 async def classify_message_type(message: str) -> bool:
-    """Classifica se mensagem é pergunta/conversa ou ação de criar tarefa. Retorna True se for pergunta/conversa."""
-    
     message_lower = message.lower().strip()
     
-    # Expressões de conversa/cumprimento/reação (NÃO criar tarefa)
     conversation_patterns = [
         'oi', 'olá', 'ola', 'hey', 'e aí', 'eai', 'tudo bem', 'tudo bom',
         'bom dia', 'boa tarde', 'boa noite', 'obrigad', 'valeu', 'vlw',
@@ -188,18 +173,15 @@ async def classify_message_type(message: str) -> bool:
         'como funciona', 'o que você faz', 'quem é você', 'como usar'
     ]
     
-    # Verifica se é expressão de conversa
     for pattern in conversation_patterns:
         if pattern in message_lower:
             return True
     
-    # Palavras-chave de perguntas
     question_words = ['qual', 'quais', 'como', 'quando', 'onde', 'por que', 'porque', 
                       'quanto', 'quantos', 'quantas', 'o que', 'há', 'existe', 'tem',
                       'posso', 'pode', 'consegue', 'me mostra', 'me diz', 'me conta',
                       'vê', 'veja', 'mostra', 'lista']
     
-    # Verifica se começa com palavra de pergunta ou tem ponto de interrogação
     if '?' in message:
         return True
     
@@ -207,36 +189,30 @@ async def classify_message_type(message: str) -> bool:
         if message_lower.startswith(word) or f' {word} ' in message_lower:
             return True
     
-    # Mensagens muito curtas (< 15 caracteres) geralmente são conversas
     if len(message_lower) < 15 and not any(word in message_lower for word in ['preciso', 'fazer', 'criar', 'comprar', 'enviar', 'revisar']):
         return True
     
-    # Palavras-chave explícitas de AÇÃO (criar tarefa)
     action_words = ['preciso', 'devo', 'tenho que', 'precisa', 'fazer', 'criar', 
                     'organizar', 'preparar', 'revisar', 'enviar', 'comprar', 
                     'agendar', 'marcar', 'ligar', 'falar com']
     
     for word in action_words:
         if word in message_lower:
-            return False  # É uma ação, não é conversa
+            return False
     
-    # Por padrão, se não identificou como ação explícita, trata como conversa
     return True
 
 
 async def answer_question(message: str, user: User, db: Session) -> str:
-    """Responde perguntas do usuário usando LLM com contexto das tarefas"""
     from ..models.schemas import TaskFilters
     from ..core.config import settings
     
-    # Buscar todas as tarefas do usuário para dar contexto à IA
     all_tasks = TaskService.get_tasks(
         db,
         user.id,
         TaskFilters(limit=100, offset=0)
     )
     
-    # Mapa de tradução de prioridades
     priority_translation = {
         "LOW": "Baixa",
         "MEDIUM": "Média",
@@ -250,7 +226,6 @@ async def answer_question(message: str, user: User, db: Session) -> str:
         "COMPLETED": "Concluída"
     }
     
-    # Preparar contexto das tarefas
     tasks_context = []
     for task in all_tasks:
         priority_emoji = {
@@ -267,7 +242,6 @@ async def answer_question(message: str, user: User, db: Session) -> str:
     
     tasks_summary = "\n".join(tasks_context) if tasks_context else "Nenhuma tarefa cadastrada."
     
-    # Estatísticas
     stats = {
         "total": len(all_tasks),
         "pending": len([t for t in all_tasks if t.status == "PENDING"]),
@@ -276,7 +250,6 @@ async def answer_question(message: str, user: User, db: Session) -> str:
         "urgent": len([t for t in all_tasks if t.priority == "URGENT"]),
     }
     
-    # Usar OpenAI para gerar resposta humana e contextual
     if settings.openai_api_key:
         try:
             from openai import OpenAI

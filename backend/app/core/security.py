@@ -7,14 +7,12 @@ from .config import settings
 
 
 def get_password_hash(password: str) -> str:
-    """Gera hash da senha usando SHA-256 com salt"""
     salt = os.urandom(32)
     pwdhash = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
     return salt.hex() + pwdhash.hex()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verifica se a senha está correta"""
     try:
         salt = bytes.fromhex(hashed_password[:64])
         stored_hash = bytes.fromhex(hashed_password[64:])
@@ -25,7 +23,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    """Cria token JWT"""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -38,7 +35,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 
 def verify_token(token: str) -> Optional[str]:
-    """Verifica token JWT e retorna o email do usuário"""
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
         email: str = payload.get("sub")
