@@ -47,12 +47,6 @@ Leggal é um assistente inteligente que combina IA conversacional com gerenciame
 - Filtros por status (Ativas/Concluídas)
 - Transições de estado (Iniciar, Concluir, Reabrir)
 
-### 🔐 Segurança
-- Autenticação JWT
-- Senhas hasheadas (PBKDF2)
-- CORS configurado
-- Validação de dados com Pydantic
-
 ### 🎨 Interface Moderna
 - Design responsivo
 - Tema verde (WhatsApp) e branco
