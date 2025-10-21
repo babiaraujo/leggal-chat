@@ -857,6 +857,3 @@ IF (
 
 ---
 
-**Última atualização**: Outubro 2024  
-**Revisores**: Time de Arquitetura Leggal  
-**Próxima revisão**: Janeiro 2025
