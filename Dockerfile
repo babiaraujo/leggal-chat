@@ -1,21 +1,17 @@
 # Multi-stage Dockerfile para Backend + Frontend no Render
 FROM node:18-slim AS frontend-build
 
-WORKDIR /frontend
+WORKDIR /app
 
-# Copiar package.json e instalar dependências
-COPY frontend/package*.json ./
-RUN npm install --legacy-peer-deps
-
-# Copiar código do frontend
+# Copiar todo o frontend
 COPY frontend/ ./
 
 # Definir variável de ambiente para o build
 ENV VITE_API_URL=/
 ENV NODE_ENV=production
 
-# Fazer build do frontend
-RUN npm run build
+# Instalar dependências e fazer build
+RUN npm install --legacy-peer-deps && npm run build
 
 # Stage 2: Backend Python + Frontend build
 FROM python:3.11-slim
@@ -46,7 +42,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ .
 
 # Copiar build do frontend para o nginx
-COPY --from=frontend-build /frontend/dist /usr/share/nginx/html
+COPY --from=frontend-build /app/dist /usr/share/nginx/html
 
 # Configurar nginx
 RUN echo 'server { \n\

@@ -1,6 +1,7 @@
 {
   "name": "leggal-frontend",
   "version": "1.0.0",
+  "type": "module",
   "description": "Interface web para gerenciamento de tarefas com IA",
   "scripts": {
     "dev": "vite",
