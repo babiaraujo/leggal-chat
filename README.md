@@ -468,14 +468,4 @@ Explore a documentação detalhada do projeto:
 
 Este projeto está sob a licença MIT. Veja [LICENSE](LICENSE) para detalhes.
 
-## 📧 Contato
 
-- **Email**: suporte@leggal.com
-- **Website**: https://leggal.com
-
----
-
-**Desenvolvido com 💚 por Leggal Team**
-
-⭐ Se este projeto foi útil, considere dar uma estrela!
-# leggal-chat
